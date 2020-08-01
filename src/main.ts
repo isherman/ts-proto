@@ -8,7 +8,7 @@ import {
   Modifier,
   PropertySpec,
   TypeName,
-  TypeNames
+  TypeNames,
 } from 'ts-poet';
 import { google } from '../build/pbjs';
 import {
@@ -33,7 +33,7 @@ import {
   toReaderCall,
   toTypeName,
   TypeMap,
-  valueTypeName
+  valueTypeName,
 } from './types';
 import { asSequence } from 'sequency';
 import SourceInfo, { Fields } from './sourceInfo';
@@ -50,18 +50,18 @@ const dataloader = TypeNames.anyType('DataLoader*dataloader');
 export enum LongOption {
   NUMBER = 'number',
   LONG = 'long',
-  STRING = 'string'
+  STRING = 'string',
 }
 
 export enum EnvOption {
   NODE = 'node',
   BROWSER = 'browser',
-  BOTH = 'both'
+  BOTH = 'both',
 }
 
 export enum OneofOption {
   PROPERTIES = 'properties',
-  UNIONS = 'unions'
+  UNIONS = 'unions',
 }
 
 export type Options = {
@@ -103,7 +103,7 @@ export function generateFile(typeMap: TypeMap, fileDesc: FileDescriptorProto, pa
 
   // Syntax, unlike most fields, is not repeated and thus does not use an index
   const headerComment = sourceInfo.lookup(Fields.file.syntax, undefined);
-  maybeAddComment(headerComment, text => (file = file.addComment(text)));
+  maybeAddComment(headerComment, (text) => (file = file.addComment(text)));
 
   // first make all the type declarations
   visit(
@@ -382,12 +382,12 @@ function generateEnum(
   sourceInfo: SourceInfo
 ): CodeBlock {
   let code = CodeBlock.empty();
-  maybeAddComment(sourceInfo, text => (code = code.add(`/** %L */\n`, text)));
+  maybeAddComment(sourceInfo, (text) => (code = code.add(`/** %L */\n`, text)));
   code = code.beginControlFlow('export const %L =', fullName);
 
   enumDesc.value.forEach((valueDesc, index) => {
     const info = sourceInfo.lookup(Fields.enum.value, index);
-    maybeAddComment(info, text => (code = code.add(`/** ${valueDesc.name} - ${text} */\n`)));
+    maybeAddComment(info, (text) => (code = code.add(`/** ${valueDesc.name} - ${text} */\n`)));
     code = code.add('%L: %L as const,\n', valueDesc.name, valueDesc.number.toString());
   });
   code = code.add('%L: %L as const,\n', UNRECOGNIZED_ENUM_NAME, UNRECOGNIZED_ENUM_VALUE.toString());
@@ -400,7 +400,7 @@ function generateEnum(
   code = code.endControlFlow();
   code = code.add('\n');
 
-  const enumTypes = [...enumDesc.value.map(v => v.number.toString()), UNRECOGNIZED_ENUM_VALUE.toString()];
+  const enumTypes = [...enumDesc.value.map((v) => v.number.toString()), UNRECOGNIZED_ENUM_VALUE.toString()];
   code = code.add('export type %L = %L;', fullName, enumTypes.join(' | '));
   code = code.add('\n');
 
@@ -456,7 +456,7 @@ function generateInterfaceDeclaration(
   options: Options
 ) {
   let message = InterfaceSpec.create(fullName).addModifiers(Modifier.EXPORT);
-  maybeAddComment(sourceInfo, text => (message = message.addJavadoc(text)));
+  maybeAddComment(sourceInfo, (text) => (message = message.addJavadoc(text)));
 
   let processedOneofs = new Set<number>();
   messageDesc.field.forEach((fieldDesc, index) => {
@@ -479,7 +479,7 @@ function generateInterfaceDeclaration(
     );
 
     const info = sourceInfo.lookup(Fields.message.field, index);
-    maybeAddComment(info, text => (prop = prop.addJavadoc(text)));
+    maybeAddComment(info, (text) => (prop = prop.addJavadoc(text)));
 
     message = message.addProperty(prop);
   });
@@ -493,11 +493,11 @@ function generateOneofProperty(
   sourceInfo: SourceInfo,
   options: Options
 ): PropertySpec {
-  let fields = messageDesc.field.filter(field => {
+  let fields = messageDesc.field.filter((field) => {
     return isWithinOneOf(field) && field.oneofIndex === oneofIndex;
   });
   let unionType = TypeNames.unionType(
-    ...fields.map(f => {
+    ...fields.map((f) => {
       let fieldName = maybeSnakeToCamel(f.name, options);
       let typeName = toTypeName(typeMap, messageDesc, f, options);
       return TypeNames.anonymousType(
@@ -517,14 +517,14 @@ function generateOneofProperty(
   // that ability. For now just concatenate all comments into one big one.
   let comments: Array<string> = [];
   const info = sourceInfo.lookup(Fields.message.oneof_decl, oneofIndex);
-  maybeAddComment(info, text => comments.push(text));
+  maybeAddComment(info, (text) => comments.push(text));
   messageDesc.field.forEach((field, index) => {
     if (!isWithinOneOf(field) || field.oneofIndex !== oneofIndex) {
       return;
     }
     const info = sourceInfo.lookup(Fields.message.field, index);
     const name = maybeSnakeToCamel(field.name, options);
-    maybeAddComment(info, text => comments.push(field.name + '\n' + text));
+    maybeAddComment(info, (text) => comments.push(field.name + '\n' + text));
   });
   if (comments.length) {
     prop = prop.addJavadoc(comments.join('\n'));
@@ -538,7 +538,7 @@ function generateBaseInstance(typeMap: TypeMap, fullName: string, messageDesc: D
   let initialValue = CodeBlock.empty().beginHash();
   asSequence(messageDesc.field)
     .filterNot(isWithinOneOf)
-    .forEach(field => {
+    .forEach((field) => {
       let val = defaultValue(typeMap, field, options);
       if (val === 'undefined') {
         return;
@@ -626,7 +626,7 @@ function generateDecode(
     .addStatement('const message = { ...base%L } as %L', fullName, fullName);
 
   // initialize all lists
-  messageDesc.field.filter(isRepeated).forEach(field => {
+  messageDesc.field.filter(isRepeated).forEach((field) => {
     const value = isMapType(typeMap, messageDesc, field, options) ? '{}' : '[]';
     func = func.addStatement('message.%L = %L', maybeSnakeToCamel(field.name, options), value);
   });
@@ -638,7 +638,7 @@ function generateDecode(
     .beginControlFlow('switch (tag >>> 3)');
 
   // add a case for each incoming field
-  messageDesc.field.forEach(field => {
+  messageDesc.field.forEach((field) => {
     const fieldName = maybeSnakeToCamel(field.name, options);
     func = func.addCode('case %L:%>\n', field.number);
 
@@ -733,17 +733,17 @@ function generateEncode(
     .addParameter('writer', 'Writer@protobufjs/minimal', { defaultValueField: CodeBlock.of('Writer.create()') })
     .returns('Writer@protobufjs/minimal');
   // then add a case for each field
-  messageDesc.field.forEach(field => {
+  messageDesc.field.forEach((field) => {
     const fieldName = maybeSnakeToCamel(field.name, options);
 
     // get a generic writer.doSomething based on the basic type
     let writeSnippet: (place: string) => CodeBlock;
     if (isPrimitive(field)) {
       const tag = ((field.number << 3) | basicWireType(field.type)) >>> 0;
-      writeSnippet = place => CodeBlock.of('writer.uint32(%L).%L(%L)', tag, toReaderCall(field), place);
+      writeSnippet = (place) => CodeBlock.of('writer.uint32(%L).%L(%L)', tag, toReaderCall(field), place);
     } else if (isTimestamp(field)) {
       const tag = ((field.number << 3) | 2) >>> 0;
-      writeSnippet = place =>
+      writeSnippet = (place) =>
         CodeBlock.of(
           '%T.encode(toTimestamp(%L), writer.uint32(%L).fork()).ldelim()',
           basicTypeName(typeMap, field, options, { keepValueType: true }),
@@ -752,7 +752,7 @@ function generateEncode(
         );
     } else if (isValueType(field)) {
       const tag = ((field.number << 3) | 2) >>> 0;
-      writeSnippet = place =>
+      writeSnippet = (place) =>
         CodeBlock.of(
           '%T.encode({ value: %L! }, writer.uint32(%L).fork()).ldelim()',
           basicTypeName(typeMap, field, options, { keepValueType: true }),
@@ -761,7 +761,7 @@ function generateEncode(
         );
     } else if (isMessage(field)) {
       const tag = ((field.number << 3) | 2) >>> 0;
-      writeSnippet = place =>
+      writeSnippet = (place) =>
         CodeBlock.of(
           '%T.encode(%L, writer.uint32(%L).fork()).ldelim()',
           basicTypeName(typeMap, field, options),
@@ -843,13 +843,13 @@ function generateFromJson(
   func = func.addStatement('const message = { ...base%L } as %L', fullName, fullName);
 
   // initialize all lists
-  messageDesc.field.filter(isRepeated).forEach(field => {
+  messageDesc.field.filter(isRepeated).forEach((field) => {
     const value = isMapType(typeMap, messageDesc, field, options) ? '{}' : '[]';
     func = func.addStatement('message.%L = %L', maybeSnakeToCamel(field.name, options), value);
   });
 
   // add a check for each incoming field
-  messageDesc.field.forEach(field => {
+  messageDesc.field.forEach((field) => {
     const fieldName = maybeSnakeToCamel(field.name, options);
 
     // get a generic 'reader.doSomething' bit that is specific to the basic type
@@ -962,7 +962,7 @@ function generateToJson(
     .returns('unknown');
   func = func.addCodeBlock(CodeBlock.empty().addStatement('const obj: any = {}'));
   // then add a case for each field
-  messageDesc.field.forEach(field => {
+  messageDesc.field.forEach((field) => {
     const fieldName = maybeSnakeToCamel(field.name, options);
 
     const readSnippet = (from: string): CodeBlock => {
@@ -1044,13 +1044,13 @@ function generateFromPartial(
   func = func.addStatement('const message = { ...base%L } as %L', fullName, fullName);
 
   // initialize all lists
-  messageDesc.field.filter(isRepeated).forEach(field => {
+  messageDesc.field.filter(isRepeated).forEach((field) => {
     const value = isMapType(typeMap, messageDesc, field, options) ? '{}' : '[]';
     func = func.addStatement('message.%L = %L', maybeSnakeToCamel(field.name, options), value);
   });
 
   // add a check for each incoming field
-  messageDesc.field.forEach(field => {
+  messageDesc.field.forEach((field) => {
     const fieldName = maybeSnakeToCamel(field.name, options);
 
     const readSnippet = (from: string): CodeBlock => {
@@ -1163,7 +1163,7 @@ function generateService(
   if (options.useContext) {
     service = service.addTypeVariable(contextTypeVar);
   }
-  maybeAddComment(sourceInfo, text => (service = service.addJavadoc(text)));
+  maybeAddComment(sourceInfo, (text) => (service = service.addJavadoc(text)));
 
   serviceDesc.method.forEach((methodDesc, index) => {
     if (options.lowerCaseServiceMethods) {
@@ -1175,7 +1175,7 @@ function generateService(
       requestFn = requestFn.addParameter('ctx', TypeNames.typeVariable('Context'));
     }
     const info = sourceInfo.lookup(Fields.service.method, index);
-    maybeAddComment(info, text => (requestFn = requestFn.addJavadoc(text)));
+    maybeAddComment(info, (text) => (requestFn = requestFn.addJavadoc(text)));
 
     requestFn = requestFn.addParameter('request', requestType(typeMap, methodDesc, options));
 
@@ -1323,7 +1323,7 @@ function generateNestjsServiceController(
   if (options.useContext) {
     service = service.addTypeVariable(contextTypeVar);
   }
-  maybeAddComment(sourceInfo, text => (service = service.addJavadoc(text)));
+  maybeAddComment(sourceInfo, (text) => (service = service.addJavadoc(text)));
 
   serviceDesc.method.forEach((methodDesc, index) => {
     if (options.lowerCaseServiceMethods) {
@@ -1335,7 +1335,7 @@ function generateNestjsServiceController(
       requestFn = requestFn.addParameter('ctx', TypeNames.typeVariable('Context'));
     }
     const info = sourceInfo.lookup(Fields.service.method, index);
-    maybeAddComment(info, text => (requestFn = requestFn.addJavadoc(text)));
+    maybeAddComment(info, (text) => (requestFn = requestFn.addJavadoc(text)));
 
     requestFn = requestFn.addParameter('request', requestType(typeMap, methodDesc, options));
 
@@ -1393,7 +1393,7 @@ function generateNestjsServiceClient(
   if (options.useContext) {
     service = service.addTypeVariable(contextTypeVar);
   }
-  maybeAddComment(sourceInfo, text => (service = service.addJavadoc(text)));
+  maybeAddComment(sourceInfo, (text) => (service = service.addJavadoc(text)));
 
   serviceDesc.method.forEach((methodDesc, index) => {
     if (options.lowerCaseServiceMethods) {
@@ -1405,7 +1405,7 @@ function generateNestjsServiceClient(
       requestFn = requestFn.addParameter('ctx', TypeNames.typeVariable('Context'));
     }
     const info = sourceInfo.lookup(Fields.service.method, index);
-    maybeAddComment(info, text => (requestFn = requestFn.addJavadoc(text)));
+    maybeAddComment(info, (text) => (requestFn = requestFn.addJavadoc(text)));
 
     requestFn = requestFn.addParameter('request', requestType(typeMap, methodDesc, options));
 
@@ -1446,13 +1446,13 @@ function generateNestjsGrpcServiceMethodsDecorator(
   let grpcServiceDecorator = FunctionSpec.create(`${serviceDesc.name}ControllerMethods`).addModifiers(Modifier.EXPORT);
 
   const grpcMethods = serviceDesc.method
-    .filter(m => !m.clientStreaming)
-    .map(m => `'${options.lowerCaseServiceMethods ? camelCase(m.name) : m.name}'`)
+    .filter((m) => !m.clientStreaming)
+    .map((m) => `'${options.lowerCaseServiceMethods ? camelCase(m.name) : m.name}'`)
     .join(', ');
 
   const grpcStreamMethods = serviceDesc.method
-    .filter(m => m.clientStreaming)
-    .map(m => `'${options.lowerCaseServiceMethods ? camelCase(m.name) : m.name}'`)
+    .filter((m) => m.clientStreaming)
+    .map((m) => `'${options.lowerCaseServiceMethods ? camelCase(m.name) : m.name}'`)
     .join(', ');
 
   const grpcMethodType = TypeNames.importedType('GrpcMethod@@nestjs/microservices');
@@ -1533,7 +1533,7 @@ function detectBatchMethod(
         inputType,
         outputFieldName,
         outputType,
-        mapType: !!mapType
+        mapType: !!mapType,
       };
     }
   }
@@ -1550,7 +1550,7 @@ function generateBatchingRpcMethod(typeMap: TypeMap, batchMethod: BatchMethod): 
     outputFieldName,
     outputType,
     mapType,
-    uniqueIdentifier
+    uniqueIdentifier,
   } = batchMethod;
   // Create the `(keys) => ...` lambda we'll pass to the DataLoader constructor
   let lambda = CodeBlock.lambda(inputFieldName) // e.g. keys
@@ -1692,7 +1692,7 @@ function responseObservable(typeMap: TypeMap, methodDesc: MethodDescriptorProto,
 
 function maybeSnakeToCamel(s: string, options: Options): string {
   if (options.snakeToCamel) {
-    return s.replace(/(\_\w)/g, m => m[1].toUpperCase());
+    return s.replace(/(\_\w)/g, (m) => m[1].toUpperCase());
   } else {
     return s;
   }
