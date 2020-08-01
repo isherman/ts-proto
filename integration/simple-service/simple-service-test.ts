@@ -1,4 +1,4 @@
-import { SimpleServiceClientImpl, SimpleServiceJsonClientImpl } from './simple_service.bak';
+import { SimpleServiceClientImpl, SimpleServiceJsonClientImpl } from './simple_service';
 import { Simple, StateEnum, Child_Type } from './simple';
 
 const simple: Simple = {
@@ -8,14 +8,14 @@ const simple: Simple = {
   state: StateEnum.ON,
   grandChildren: [
     { name: 'grand1', type: Child_Type.UNKNOWN },
-    { name: 'grand2', type: Child_Type.UNKNOWN }
+    { name: 'grand2', type: Child_Type.UNKNOWN },
   ],
   coins: [2, 4, 6],
   snacks: ['a', 'b'],
   oldStates: [StateEnum.ON, StateEnum.OFF],
   createdAt: new Date('1970-01-01T00:00:00.000Z'),
   thing: undefined,
-  blobs: []
+  blobs: [],
 };
 
 describe('simple service', () => {
@@ -23,7 +23,10 @@ describe('simple service', () => {
     const echoRpc = {
       request: (_service: string, _method: string, data: Uint8Array) => {
         return Promise.resolve(data);
-      }
+      },
+      requestJson: (_service: string, _method: string, data: unknown) => {
+        return Promise.resolve(data);
+      },
     };
 
     const client = new SimpleServiceClientImpl(echoRpc);
@@ -40,20 +43,23 @@ describe('simple service', () => {
       state: 'ON',
       grandChildren: [
         { name: 'grand1', type: 'UNKNOWN' },
-        { name: 'grand2', type: 'UNKNOWN' }
+        { name: 'grand2', type: 'UNKNOWN' },
       ],
       coins: [2, 4, 6],
       snacks: ['a', 'b'],
       oldStates: ['ON', 'OFF'],
       thing: undefined,
-      blobs: []
+      blobs: [],
     };
 
     const echoRpc = {
-      request: (_service: string, _method: string, data: unknown) => {
+      request: (_service: string, _method: string, data: Uint8Array) => {
+        return Promise.resolve(data);
+      },
+      requestJson: (_service: string, _method: string, data: unknown) => {
         expect(data).toEqual(jsonSerializedSimple);
         return Promise.resolve(data);
-      }
+      },
     };
 
     const client = new SimpleServiceJsonClientImpl(echoRpc);

@@ -419,9 +419,7 @@ function generateEnumFromJson(fullName: string, enumDesc: EnumDescriptorProto): 
 }
 
 function generateEnumToJson(fullName: string, enumDesc: EnumDescriptorProto): FunctionSpec {
-  let func = FunctionSpec.create('toJSON')
-    .addParameter('object', fullName)
-    .returns('string');
+  let func = FunctionSpec.create('toJSON').addParameter('object', fullName).returns('string');
   let body = CodeBlock.empty().beginControlFlow('switch (object)');
   for (const valueDesc of enumDesc.value) {
     body = body.add('case %L.%L:%>\n', fullName, valueDesc.name).addStatement('return %S%<', valueDesc.name);
