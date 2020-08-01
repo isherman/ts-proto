@@ -3,7 +3,7 @@ import { Options, LongOption, EnvOption, OneofOption } from './main';
 import { SourceDescription } from './sourceInfo';
 
 export function readToBuffer(stream: ReadStream): Promise<Buffer> {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const ret: Array<Buffer | string> = [];
     let len = 0;
     stream.on('readable', () => {
@@ -46,11 +46,12 @@ export function defaultOptions(): Options {
     outputEncodeMethods: true,
     outputJsonMethods: true,
     outputClientImpl: true,
+    outputJsonClientImpl: false,
     returnObservable: false,
     addGrpcMetadata: false,
     addNestjsRestParameter: false,
     nestJs: false,
-    env: EnvOption.BOTH,
+    env: EnvOption.BOTH
   };
 }
 
@@ -90,6 +91,9 @@ export function optionsFromParameter(parameter: string): Options {
     }
     if (parameter.includes('outputClientImpl=false')) {
       options.outputClientImpl = false;
+    }
+    if (parameter.includes('outputJsonClientImpl=true')) {
+      options.outputJsonClientImpl = true;
     }
 
     if (parameter.includes('nestJs=true')) {
