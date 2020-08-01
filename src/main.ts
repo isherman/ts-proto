@@ -136,9 +136,7 @@ export function generateFile(typeMap: TypeMap, fileDesc: FileDescriptorProto, pa
       sourceInfo,
       (fullName, message) => {
         file = file.addProperty(generateBaseInstance(typeMap, fullName, message, options));
-        let staticMethods = CodeBlock.empty()
-          .add('export const %L = ', fullName)
-          .beginHash();
+        let staticMethods = CodeBlock.empty().add('export const %L = ', fullName).beginHash();
 
         staticMethods = !options.outputEncodeMethods
           ? staticMethods
@@ -153,10 +151,7 @@ export function generateFile(typeMap: TypeMap, fileDesc: FileDescriptorProto, pa
               .addHashEntry(generateFromPartial(typeMap, fullName, message, options))
               .addHashEntry(generateToJson(typeMap, fullName, message, options));
 
-        staticMethods = staticMethods
-          .endHash()
-          .add(';')
-          .newLine();
+        staticMethods = staticMethods.endHash().add(';').newLine();
         file = file.addCode(staticMethods);
       },
       options
@@ -250,16 +245,14 @@ function addLongUtilityMethod(file: FileSpec, options: Options): FileSpec {
     );
   } else {
     return file.addFunction(
-      FunctionSpec.create('longToNumber')
-        .addParameter('long', 'Long*long')
-        .addCodeBlock(
-          CodeBlock.empty()
-            .beginControlFlow('if (long.gt(Number.MAX_SAFE_INTEGER))')
-            // We use globalThis to avoid conflicts on protobuf types named `Error`.
-            .addStatement('throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER")')
-            .endControlFlow()
-            .addStatement('return long.toNumber()')
-        )
+      FunctionSpec.create('longToNumber').addParameter('long', 'Long*long').addCodeBlock(
+        CodeBlock.empty()
+          .beginControlFlow('if (long.gt(Number.MAX_SAFE_INTEGER))')
+          // We use globalThis to avoid conflicts on protobuf types named `Error`.
+          .addStatement('throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER")')
+          .endControlFlow()
+          .addStatement('return long.toNumber()')
+      )
     );
   }
 }
@@ -408,9 +401,7 @@ function generateEnum(
 }
 
 function generateEnumFromJson(fullName: string, enumDesc: EnumDescriptorProto): FunctionSpec {
-  let func = FunctionSpec.create('fromJSON')
-    .addParameter('object', 'any')
-    .returns(fullName);
+  let func = FunctionSpec.create('fromJSON').addParameter('object', 'any').returns(fullName);
   let body = CodeBlock.empty().beginControlFlow('switch (object)');
   for (const valueDesc of enumDesc.value) {
     body = body
@@ -435,10 +426,7 @@ function generateEnumToJson(fullName: string, enumDesc: EnumDescriptorProto): Fu
   for (const valueDesc of enumDesc.value) {
     body = body.add('case %L.%L:%>\n', fullName, valueDesc.name).addStatement('return %S%<', valueDesc.name);
   }
-  body = body
-    .add('default:%>\n')
-    .addStatement('return "UNKNOWN"%<')
-    .endControlFlow();
+  body = body.add('default:%>\n').addStatement('return "UNKNOWN"%<').endControlFlow();
   return func.addCodeBlock(body);
 }
 
@@ -708,15 +696,9 @@ function generateDecode(
     }
     func = func.addStatement('break%<');
   });
-  func = func
-    .addCode('default:%>\n')
-    .addStatement('reader.skipType(tag & 7)')
-    .addStatement('break%<');
+  func = func.addCode('default:%>\n').addStatement('reader.skipType(tag & 7)').addStatement('break%<');
   // and then wrap up the switch/while/return
-  func = func
-    .endControlFlow()
-    .endControlFlow()
-    .addStatement('return message');
+  func = func.endControlFlow().endControlFlow().addStatement('return message');
   return func;
 }
 
@@ -1665,9 +1647,7 @@ function generateDataLoadersType(): InterfaceSpec {
     .addParameter('identifier', TypeNames.STRING)
     .addParameter('constructorFn', TypeNames.lambda2([], TypeNames.typeVariable('T')))
     .returns(TypeNames.typeVariable('T'));
-  return InterfaceSpec.create('DataLoaders')
-    .addModifiers(Modifier.EXPORT)
-    .addFunction(fn);
+  return InterfaceSpec.create('DataLoaders').addModifiers(Modifier.EXPORT).addFunction(fn);
 }
 
 function requestType(typeMap: TypeMap, methodDesc: MethodDescriptorProto, options: Options): TypeName {
@@ -1700,7 +1680,7 @@ function maybeSnakeToCamel(s: string, options: Options): string {
 
 function camelToSnake(s: string): string {
   return s
-    .replace(/[\w]([A-Z])/g, function(m) {
+    .replace(/[\w]([A-Z])/g, function (m) {
       return m[0] + '_' + m[1];
     })
     .toUpperCase();
