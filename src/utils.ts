@@ -3,7 +3,7 @@ import { Options, LongOption, EnvOption, OneofOption } from './main';
 import { SourceDescription } from './sourceInfo';
 
 export function readToBuffer(stream: ReadStream): Promise<Buffer> {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     const ret: Array<Buffer | string> = [];
     let len = 0;
     stream.on('readable', () => {
@@ -51,7 +51,7 @@ export function defaultOptions(): Options {
     addGrpcMetadata: false,
     addNestjsRestParameter: false,
     nestJs: false,
-    env: EnvOption.BOTH
+    env: EnvOption.BOTH,
   };
 }
 
